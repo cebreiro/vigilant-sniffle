@@ -1,0 +1,4 @@
+target_sources(game_server PRIVATE
+login_request.cpp
+world_select_request.cpp
+)

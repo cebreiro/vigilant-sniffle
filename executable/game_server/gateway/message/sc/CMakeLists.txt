@@ -1,0 +1,8 @@
+target_sources(game_server PRIVATE
+sc_message.cpp
+client_version_response.cpp
+authentication_response.cpp
+character_list_response.cpp
+character_name_check_response.cpp
+character_create_response.cpp
+)

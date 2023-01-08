@@ -1,0 +1,35 @@
+{
+    "log": {
+        "console": {
+            "async": false,
+            "level": 1
+        },
+        "dailyFile": {
+            "path": "logs/log.txt",
+            "level": 0
+        }
+    },
+    "executor": {
+        "networkConcurrency": 0,
+        "dbConcurrency": 0
+    },
+    "gameData": {
+        "path": "C:\\data\\Misc"
+    },
+    "gameDB": {
+        "odbcDSN": "dsn",
+        "odbcUser": "user",
+        "odbcPassword": "password"
+    },
+    "worlds": [
+        {
+            "id": 1
+        },
+        {
+            "id": 2
+        },
+        {
+            "id": 3
+        }
+    ]
+}

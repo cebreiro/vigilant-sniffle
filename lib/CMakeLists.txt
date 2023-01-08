@@ -1,0 +1,6 @@
+add_subdirectory(common)
+add_subdirectory(network)
+add_subdirectory(odbc)
+add_subdirectory(game_base)
+add_subdirectory(game_data)
+add_subdirectory(game_db)

@@ -1,0 +1,6 @@
+target_sources(game_server PRIVATE
+cs_message_handler_container.cpp
+cs_message_handler_auto_registry.cpp
+login_request_handler.cpp
+world_select_request_handler.cpp
+)

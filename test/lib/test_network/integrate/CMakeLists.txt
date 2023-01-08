@@ -1,0 +1,6 @@
+target_sources(test_network PRIVATE
+test_integrate_network.cpp
+test_client.cpp
+test_server.cpp
+test_decoder_encoder.cpp
+)
