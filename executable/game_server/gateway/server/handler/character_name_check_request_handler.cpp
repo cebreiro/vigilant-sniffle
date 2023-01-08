@@ -2,10 +2,10 @@
 
 #include "lib/common/execution/future_await.h"
 #include "lib/network/session.h"
-#include "service/service_locator.h"
 #include "gateway/server/handler/cs_message_handler_auto_registry.h"
 #include "gateway/server/gateway_session_context.h"
 #include "gateway/message/sc/character_name_check_response.h"
+#include "service/service_locator.h"
 
 namespace cebreiro::gateway
 {
