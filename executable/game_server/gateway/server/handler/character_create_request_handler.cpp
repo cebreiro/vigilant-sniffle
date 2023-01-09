@@ -52,20 +52,19 @@ namespace cebreiro::gateway
 		bool result = co_await locator.WorldService(context.worldId).CreateCharacter(co_await CreateCharacter(locator, context, message))
 			.ConfigureAwait(context.strand);
 
-		if (result)
-		{
-			context.characters.clear();
-			context.characters = co_await locator.WorldService(context.worldId).GetCharacters(context.accountId)
-				.ConfigureAwait(context.strand);
-
-			context.session->Send(CharacterCreateResponse(true).Serialize());
-		}
-		else
+		if (!result)
 		{
 			OnError(locator, context,
 				std::format("fail to create character - db error. slot: {}, session:[{}:{}]",
 					message.slot, session.Id().Value(), session.RemoteAddress()));
+			co_return;
 		}
+
+		context.characters.clear();
+		context.characters = co_await locator.WorldService(context.worldId).GetCharacters(context.accountId)
+			.ConfigureAwait(context.strand);
+
+		context.session->Send(CharacterCreateResponse(true).Serialize());
 	}
 
 	void CharacterCreateRequestHandler::OnError(const IServiceLocator& locator, const GatewaySessionContext& context, std::string log)
