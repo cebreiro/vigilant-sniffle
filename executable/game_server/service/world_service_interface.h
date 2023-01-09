@@ -4,12 +4,18 @@
 
 namespace cebreiro
 {
+	enum class ItemOriginType
+	{
+		InitialSupply = 0b00000,
+	};
+
 	class IWorldService
 	{
 	public:
 		virtual ~IWorldService() {}
 
 		virtual auto GenerateCharacterId() -> Future<int64_t> = 0;
+		virtual auto GenerateItemId(ItemOriginType type) -> Future<int64_t> = 0;
 
 		virtual auto CheckCharacterNameUsable(std::string name) const -> Future<bool> = 0;
 		virtual auto CreateCharacter(gamedb::Character character) -> Future<bool> = 0;

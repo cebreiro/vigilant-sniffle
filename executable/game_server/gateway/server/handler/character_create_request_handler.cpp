@@ -78,10 +78,12 @@ namespace cebreiro::gateway
 	auto CharacterCreateRequestHandler::CreateCharacter(const IServiceLocator& locator,
 		const GatewaySessionContext& context, const CharacterCreateRequest& message) const -> Future<gamedb::Character>
 	{
+		ItemOriginType type = ItemOriginType::InitialSupply;
+
 		auto future1 = locator.WorldService(context.worldId).GenerateCharacterId();
-		auto future2 = locator.WorldService(context.worldId).GenerateCharacterId();
-		auto future3 = locator.WorldService(context.worldId).GenerateCharacterId();
-		auto future4 = locator.WorldService(context.worldId).GenerateCharacterId();
+		auto future2 = locator.WorldService(context.worldId).GenerateItemId(type);
+		auto future3 = locator.WorldService(context.worldId).GenerateItemId(type);
+		auto future4 = locator.WorldService(context.worldId).GenerateItemId(type);
 
 		co_await WaitAll(future1, future2, future3, future4);
 

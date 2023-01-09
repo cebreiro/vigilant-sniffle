@@ -11,14 +11,21 @@ namespace cebreiro::world
 		, _worldId(worldId)
 		, _address(std::move(address))
 		, _gameDB(gameDB)
-		, _snowflake(worldId)
+		, _characterIdGenerator(worldId)
+		, _itemIdGenerator_InitialSupply(worldId, static_cast<int32_t>(ItemOriginType::InitialSupply))
 	{
 	}
 
 	auto WorldService::GenerateCharacterId() -> Future<int64_t>
 	{
 		co_await _strand;
-		co_return static_cast<int64_t>(_snowflake.Generate());
+		co_return static_cast<int64_t>(_characterIdGenerator.Generate());
+	}
+
+	auto WorldService::GenerateItemId(ItemOriginType type) -> Future<int64_t>
+	{
+		co_await _strand;
+		co_return static_cast<int64_t>(_itemIdGenerator_InitialSupply.Generate());
 	}
 
 	auto WorldService::CheckCharacterNameUsable(std::string name) const -> Future<bool>

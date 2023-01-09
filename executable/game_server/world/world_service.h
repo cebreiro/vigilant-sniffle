@@ -18,6 +18,8 @@ namespace cebreiro::world
 		WorldService(int8_t worldId, std::string address, gamedb::GameDB& gameDB);
 
 		auto GenerateCharacterId() -> Future<int64_t> override;
+		auto GenerateItemId(ItemOriginType type) -> Future<int64_t> override;
+
 		auto CheckCharacterNameUsable(std::string name) const -> Future<bool> override;
 		auto CreateCharacter(gamedb::Character character) -> Future<bool> override;
 		auto DeleteCharacter(int64_t cid) -> Future<bool> override;
@@ -33,6 +35,7 @@ namespace cebreiro::world
 		std::string _address;
 		gamedb::GameDB& _gameDB;
 
-		UniqueSnowflake<ServerConstant::TWEPOCH> _snowflake;
+		UniqueSnowflake<ServerConstant::TWEPOCH> _characterIdGenerator;
+		UniqueSnowflake<ServerConstant::TWEPOCH> _itemIdGenerator_InitialSupply;
 	};
 }
