@@ -52,7 +52,10 @@ namespace cebreiro::gateway
 			co_return;
 		}
 
-		if (! co_await locator.WorldService(context.worldId).DeleteCharacter(*cid))
+		bool result = co_await locator.WorldService(context.worldId).DeleteCharacter(*cid)
+			.ConfigureAwait(context.strand);
+
+		if (!result)
 		{
 			OnError(locator, context,
 				std::format("fail to delete character. slot: {}, session[{}: {}]",
@@ -61,7 +64,8 @@ namespace cebreiro::gateway
 		}
 
 		context.characters.clear();
-		context.characters = co_await locator.WorldService(context.worldId).GetCharacters(context.accountId);
+		context.characters = co_await locator.WorldService(context.worldId).GetCharacters(context.accountId)
+			.ConfigureAwait(context.strand);
 
 		context.session->Send(CharacterDeleteResponse(true).Serialize());
 	}
