@@ -1,12 +1,15 @@
 #include "login_request_handler.h"
 
 #include "lib/common/execution/future_await.h"
+#include "lib/common/log/log_macro.h"
 #include "lib/network/session.h"
+#include "lib/game_service/login/login_result.h"
+#include "lib/game_service/service_locator_interface.h"
 #include "login/message/sc/login_fail_response.h"
 #include "login/message/sc/world_list_notify.h"
 #include "login/server/login_session_context.h"
 #include "login/server/handler/cs_message_handler_auto_registry.h"
-#include "service/service_locator.h"
+
 
 namespace cebreiro::login
 {
@@ -50,6 +53,7 @@ namespace cebreiro::login
 		}
 
 		context.state = LoginSessionState::LoggedIn;
+		context.authToken = result.authToken;
 		context.accountId = result.accountId;
 
 		session.Send(WorldListNotify(locator.WorldServices()).Serialize());

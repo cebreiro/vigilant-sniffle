@@ -6,10 +6,8 @@ namespace cebreiro::gateway
 {
 	void AuthenticationRequest::Deserialize(gamebase::PacketReader& reader)
 	{
-		int32_t key2 = reader.ReadInt32();
-		int32_t key1 = reader.ReadInt32();
-
-		token = { key1, key2 };
+		key2 = reader.ReadInt32();
+		key1 = reader.ReadInt32();
 		unk = reader.ReadInt64();
 
 		// random bytes generated from client

@@ -1,11 +1,13 @@
 #include "world_select_request_handler.h"
 
 #include "lib/common/execution/future_await.h"
+#include "lib/common/log/log_macro.h"
 #include "lib/network/session.h"
+#include "lib/game_service/service_locator_interface.h"
 #include "login/message/sc/world_select_response.h"
 #include "login/server/login_session_context.h"
-#include "service/service_locator.h"
 #include "login/server/handler/cs_message_handler_auto_registry.h"
+
 
 namespace cebreiro::login
 {
@@ -26,19 +28,7 @@ namespace cebreiro::login
 			co_return;
 		}
 
-		std::array<int32_t, 2> authenticationToken = [&message]() -> std::array<int32_t, 2>
-		{
-			// doesn't use client key
-			std::array result{ message.key1, message.key2 };
-
-			std::random_device rnd;
-			result[0] = rnd();
-			result[1] = rnd();
-
-			return result;
-		}();
-
-		bool result = co_await locator.LoginService().AddGatewayAuthentication(context.accountId, message.worldId, authenticationToken)
+		bool result = co_await locator.LoginService().SetWorldId(context.authToken, message.worldId)
 			.ConfigureAwait(context.strand);
 
 		if (!result)
@@ -59,7 +49,7 @@ namespace cebreiro::login
 
 		context.state = LoginSessionState::WorldSelectOk;
 
-		session.Send(WorldSelectResponse(message.worldId, authenticationToken).Serialize());
+		session.Send(WorldSelectResponse(message.worldId, context.authToken.ToIntArray()).Serialize());
 
 		constexpr uint64_t cheatSessionAutoDisconnectMilliSeconds = 3000;
 		co_await Delay(cheatSessionAutoDisconnectMilliSeconds);
@@ -74,7 +64,7 @@ namespace cebreiro::login
 
 		LOGE(locator.LogService(), std::move(log))
 
-		(void)locator.LoginService().Logout(context.accountId);
+		(void)locator.LoginService().Logout(context.authToken, context.accountId);
 		session.Close();
 	}
 }

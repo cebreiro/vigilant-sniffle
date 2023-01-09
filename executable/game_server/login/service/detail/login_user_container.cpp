@@ -65,11 +65,11 @@ namespace cebreiro::login
 		return iter != _accountIndexer.end() ? iter->second.get() : nullptr;
 	}
 
-	auto LoginUserContainer::Find(std::array<int32_t, 2> token) const -> LoginUser*
+	auto LoginUserContainer::Find(const AuthToken& token) const -> LoginUser*
 	{
 		auto iter = sr::find_if(_users, [token](const std::shared_ptr<LoginUser>& user)
 			{
-				return user->gatewayAuthenticationToken && user->gatewayAuthenticationToken == token;
+				return user->authenticationToken == token;
 			});
 		return iter != _users.end() ? iter->get() : nullptr;
 	}

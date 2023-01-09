@@ -1,4 +1,5 @@
 #pragma once
+#include "lib/game_service/login/auth_token.h"
 
 namespace cebreiro::login
 {
@@ -8,8 +9,8 @@ namespace cebreiro::login
 		std::string account;
 		uint64_t loginTimePoint = 0;
 		std::optional<int8_t> worldId = std::nullopt;
-		std::optional<std::array<int32_t, 2>> gatewayAuthenticationToken = std::nullopt;
-		uint64_t authenticationExpireTimePoint = 0;
+		AuthToken authenticationToken;
+		std::optional<uint64_t> expireTimePoint = std::nullopt;
 	};
 
 	class LoginUserContainer
@@ -24,7 +25,7 @@ namespace cebreiro::login
 
 		auto Find(int64_t id) const -> LoginUser*;
 		auto Find(const std::string& account) const -> LoginUser*;
-		auto Find(std::array<int32_t, 2> token) const -> LoginUser*;
+		auto Find(const AuthToken& token) const -> LoginUser*;
 
 		void Foreach(const std::function<void(LoginUser&)>& fn);
 

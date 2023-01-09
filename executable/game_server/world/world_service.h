@@ -2,8 +2,8 @@
 #include "lib/common/snowflake.h"
 #include "lib/common/execution/future.h"
 #include "lib/common/execution/thread_pool.h"
+#include "lib/game_service/world/world_service_interface.h"
 #include "config/server_constant.h"
-#include "service/world_service_interface.h"
 
 namespace cebreiro::gamedb
 {

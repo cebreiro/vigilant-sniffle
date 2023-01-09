@@ -37,7 +37,9 @@ namespace cebreiro::gateway
 		void UnhandledException(network::Session& session, const std::exception& exception) override;
 
 	private:
-		void HandleMessageException(const GatewaySessionContext& context, const std::exception& exception) const;
+		void HandleMessageException(const GatewaySessionContext& context, const std::exception& exception);
+
+		void RemoveSession(network::Session& session);
 
 	private:
 		const IServiceLocator& _locator;

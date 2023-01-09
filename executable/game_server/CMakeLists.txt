@@ -56,6 +56,7 @@ network
 game_base
 game_data
 game_db
+game_service
 TBB::tbb
 nlohmann_json::nlohmann_json
 )

@@ -4,8 +4,9 @@
 #include "lib/common/execution/future.h"
 #include "lib/common/execution/future_await.h"
 #include "lib/common/execution/executor_await.h"
+#include "lib/common/log/log_macro.h"
 #include "lib/game_db/game_db.h"
-#include "service/service_locator.h"
+#include "lib/game_service/service_locator_interface.h"
 #include "login/service/detail/login_user_container.h"
 
 namespace cebreiro::login
@@ -41,74 +42,92 @@ namespace cebreiro::login
 
 		if (_loginUserContainer->Contains(result->id))
 		{
+			for (const std::function<void(int64_t)>& handler : _loginReleaseEventHandlers)
+			{
+				handler(result->id);
+			}
+
+			_loginUserContainer->Remove(result->id);
+
 			co_return LoginResult{
 				.errorCode = LoginResult::ErrorCode::FailDuplicated,
 			};
 		}
 
-		LoginUser loginUserData{
-			.id = result->id,
-			.account = result->account,
-			.loginTimePoint = Now(),
-		};
+		LoginUser loginUserData = [](const gamebase::Account& account) -> LoginUser
+		{
+			std::random_device rnd{};
+
+			return LoginUser{
+				.id = account.id,
+				.account = account.account,
+				.loginTimePoint = Now(),
+				.authenticationToken = AuthToken(rnd(), rnd()),
+			};
+		}(result.value());
 		_loginUserContainer->Add(loginUserData);
 
 		co_return LoginResult{
 			.errorCode = LoginResult::ErrorCode::Success,
+			.authToken = loginUserData.authenticationToken,
 			.accountId = result->id,
 		};
 	}
 
-	auto LoginService::Logout(int64_t accountId) -> Future<void>
+	auto LoginService::Logout(AuthToken authToken,int64_t accountId) -> Future<void>
 	{
 		co_await _strand;
 
 		_loginUserContainer->Remove(accountId);
 	}
 
-	auto LoginService::AddGatewayAuthentication(int64_t accountId, int8_t world, std::array<int32_t, 2> token)
+	void LoginService::AddLoginReleaseEventHandler(const std::function<void(int64_t)>& handler)
+	{
+		_loginReleaseEventHandlers.push_back(handler);
+	}
+
+	auto LoginService::SetWorldId(AuthToken authToken, int8_t world)
 		-> Future<bool>
 	{
 		co_await _strand;
 
-		LoginUser* loginUser = _loginUserContainer->Find(accountId);
+		LoginUser* loginUser = _loginUserContainer->Find(authToken);
 		if (!loginUser)
 		{
 			LOGE(_locator.LogService(),
-				std::format("fail to find login user. account: {}", accountId))
+				std::format("fail to find login user. token: {}", authToken.ToString()))
 			co_return false;
 		}
 
 		if (loginUser->worldId.has_value())
 		{
 			LOGE(_locator.LogService(),
-				std::format("login user already has world and token. account: {}, world[old:{}, new:{}]", 
-					accountId, loginUser->worldId.value(), world))
+				std::format("login user already has world. account: {}, world[old:{}, new:{}]", 
+					loginUser->account, loginUser->worldId.value(), world))
 			co_return false;
 		}
 
 		loginUser->worldId = world;
-		loginUser->gatewayAuthenticationToken = token;
-		loginUser->authenticationExpireTimePoint = Now() + 10000;
+		loginUser->expireTimePoint = Now() + 10000;
 
 		co_return true;
 	}
 
-	auto LoginService::PopGatewayAuthentication(std::array<int32_t, 2> token)
+	auto LoginService::FindUser(AuthToken authToken)
 		-> Future<std::optional<std::pair<int64_t, int8_t>>>
 	{
 		co_await _strand;
 
-		LoginUser* user = _loginUserContainer->Find(token);
+		LoginUser* user = _loginUserContainer->Find(authToken);
 		if (!user)
 		{
 			LOGW(_locator.LogService(),
-				std::format("fail to find login user from token. token: [{}:{}]", token[0], token[1]))
+				std::format("fail to find login user from token. token: [{}]", authToken.ToString()))
 			co_return std::nullopt;
 		}
 
 		assert(user->worldId);
-		user->gatewayAuthenticationToken.reset();
+		user->expireTimePoint.reset();
 
 		co_return std::pair(user->id, user->worldId.value());
 	}
@@ -125,9 +144,9 @@ namespace cebreiro::login
 
 			_loginUserContainer->Foreach([now, &removeTargets](const LoginUser& user)
 				{
-					if (user.gatewayAuthenticationToken.has_value())
+					if (user.expireTimePoint.has_value())
 					{
-						if (now >= user.authenticationExpireTimePoint)
+						if (now >= user.expireTimePoint)
 						{
 							removeTargets.push_back(user.id);
 						}

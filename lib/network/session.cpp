@@ -60,6 +60,7 @@ namespace cebreiro::network
 	void Session::Close()
 	{
 		_shutdown = true;
+		_socket->Close();
 	}
 
 	void Session::Send(Buffer buffer, bool encode)

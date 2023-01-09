@@ -3,11 +3,12 @@
 #include "lib/common/execution/future.h"
 #include "lib/common/log/log_macro.h"
 #include "lib/network/session.h"
+#include "lib/game_service/service_locator_interface.h"
 #include "config/server_constant.h"
 #include "gateway/message/sc/client_version_response.h"
 #include "gateway/server/gateway_session_context.h"
 #include "gateway/server/handler/cs_message_handler_auto_registry.h"
-#include "service/service_locator.h"
+
 
 namespace cebreiro::gateway
 {

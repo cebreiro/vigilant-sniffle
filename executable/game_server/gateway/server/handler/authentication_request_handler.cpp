@@ -3,10 +3,11 @@
 #include "lib/common/execution/future_await.h"
 #include "lib/common/log/log_macro.h"
 #include "lib/network/session.h"
-#include "service/service_locator.h"
+#include "lib/game_service/service_locator_interface.h"
 #include "gateway/server/gateway_session_context.h"
 #include "gateway/server/handler/cs_message_handler_auto_registry.h"
 #include "gateway/message/sc/authentication_response.h"
+
 
 namespace cebreiro::gateway
 {
@@ -18,7 +19,9 @@ namespace cebreiro::gateway
 	{
 		network::Session& session = *context.session;
 
-		std::optional<std::pair<int64_t, int8_t>> result = co_await locator.LoginService().PopGatewayAuthentication(message.token)
+		AuthToken authToken(message.key1, message.key2);
+
+		std::optional<std::pair<int64_t, int8_t>> result = co_await locator.LoginService().FindUser(authToken)
 			.ConfigureAwait(context.strand);
 
 		if (context.state != GatewaySessionState::VersionChecked)
@@ -38,6 +41,7 @@ namespace cebreiro::gateway
 		}
 
 		context.state = GatewaySessionState::Authorized;
+		context.authToken = authToken;
 		context.accountId = result->first;
 		context.worldId = result->second;
 		context.characters = co_await locator.WorldService(result->second).GetCharacters(context.accountId)

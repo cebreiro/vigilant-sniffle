@@ -1,15 +1,15 @@
 #include "gateway_server.h"
 
-#include "handler/cs_message_handler_container.h"
 #include "lib/common/log/log_macro.h"
 #include "lib/common/stream/stream_util.h"
 #include "lib/game_base/network/packet_reader.h"
 #include "lib/network/acceptor.h"
 #include "lib/network/session.h"
+#include "lib/game_service/service_locator_interface.h"
 #include "config/server_constant.h"
-#include "service/service_locator.h"
 #include "gateway/message/cs/cs_message_type.h"
 #include "gateway/server/gateway_session_context.h"
+#include "gateway/server/handler/cs_message_handler_container.h"
 #include "gateway/server/handler/cs_message_handler.h"
 #include "gateway/server/security/gateway_packet_decoder.h"
 #include "gateway/server/security/gateway_packet_encoder.h"
@@ -27,6 +27,16 @@ namespace cebreiro::gateway
 	void GatewayServer::Start()
 	{
 		_acceptor->StartAccept();
+
+		_locator.LoginService().AddLoginReleaseEventHandler([this](int64_t id)
+			{
+				decltype(_sessions)::const_accessor accesor;
+
+				if (_sessions.find(accesor, id))
+				{
+					accesor->second->session->Close();
+				}
+			});
 	}
 
 	void GatewayServer::Stop()
@@ -187,28 +197,63 @@ namespace cebreiro::gateway
 
 	void GatewayServer::OnError(network::Session& session, const network::error_t& error)
 	{
-		(void)session;
-		(void)error;
-
 		LOGW(_locator.LogService(),
 			std::format("session[{}:{}] io error: {}",
 				session.Id().Value(), session.RemoteAddress(), error.message()))
+
+		RemoveSession(session);
 	}
 
 	void GatewayServer::UnhandledException(network::Session& session, const std::exception& exception)
 	{
-		(void)session;
-		(void)exception;
-
 		LOGC(_locator.LogService(),
 			std::format("session[{}:{}] unhandled exception: {}",
 				session.Id().Value(), session.RemoteAddress(), exception.what()))
+
+		RemoveSession(session);
 	}
 
-	void GatewayServer::HandleMessageException(const GatewaySessionContext& context, const std::exception& exception) const
+	void GatewayServer::HandleMessageException(const GatewaySessionContext& context, const std::exception& exception)
 	{
 		LOGE(_locator.LogService(),
 			std::format("handle message exception. session[{}:{}], exception: {}",
 				context.session->Id().Value(), context.session->RemoteAddress(), exception.what()))
+
+		RemoveSession(*context.session);
+	}
+
+	void GatewayServer::RemoveSession(network::Session& session)
+	{
+		std::shared_ptr<GatewaySessionContext> context = [&]() -> std::shared_ptr<GatewaySessionContext>
+		{
+			std::shared_ptr<GatewaySessionContext> result = {};
+			{
+				decltype(_sessions)::const_accessor accessor;
+
+				if (_sessions.find(accessor, session.Id().Value()))
+				{
+					result = std::move(accessor->second);
+					_sessions.erase(accessor);
+				}
+			}
+
+			return result;
+		}();
+
+		if (!context)
+		{
+			return;
+		}
+
+		context->strand.Post([this, context]()
+			{
+				if (context->state == GatewaySessionState::Connected ||
+					context->state == GatewaySessionState::VersionChecked)
+				{
+					return;
+				}
+
+				(void)_locator.LoginService().Logout(context->authToken, context->accountId);
+			});
 	}
 }

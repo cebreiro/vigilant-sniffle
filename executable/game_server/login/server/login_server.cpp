@@ -3,14 +3,16 @@
 #include "lib/common/stream/stream_util.h"
 #include "lib/network/acceptor.h"
 #include "lib/network/session.h"
+#include "lib/game_service/service_locator_interface.h"
 #include "config/server_constant.h"
+#include "lib/common/log/log_macro.h"
 #include "login/message/cs/cs_message_type.h"
 #include "login/message/sc/hello.h"
 #include "login/server/handler/cs_message_handler.h"
 #include "login/server/handler/cs_message_handler_container.h"
 #include "login/server/security/login_packet_decoder.h"
 #include "login/server/security/login_packet_encoder.h"
-#include "service/service_locator.h"
+
 
 namespace cebreiro::login
 {
@@ -25,6 +27,16 @@ namespace cebreiro::login
 	void LoginServer::Start()
 	{
 		_acceptor->StartAccept();
+
+		_locator.LoginService().AddLoginReleaseEventHandler([this](int64_t id)
+			{
+				decltype(_sessions)::const_accessor accesor;
+
+				if (_sessions.find(accesor, id))
+				{
+					accesor->second->session->Close();
+				}
+			});
 	}
 
 	void LoginServer::Stop()
@@ -188,28 +200,60 @@ namespace cebreiro::login
 
 	void LoginServer::OnError(network::Session& session, const network::error_t& error)
 	{
-		(void)session;
-		(void)error;
-
 		LOGW(_locator.LogService(),
 			std::format("session[{}:{}] io error: {}",
 				session.Id().Value(), session.RemoteAddress(), error.message()))
+
+		RemoveSession(session);
 	}
 
 	void LoginServer::UnhandledException(network::Session& session, const std::exception& exception)
 	{
-		(void)session;
-		(void)exception;
-
 		LOGC(_locator.LogService(),
 			std::format("session[{}:{}] unhandled exception: {}",
 				session.Id().Value(), session.RemoteAddress(), exception.what()))
+
+		RemoveSession(session);
 	}
 
-	void LoginServer::HandleMessageException(const LoginSessionContext& context, const std::exception& exception) const
+	void LoginServer::HandleMessageException(const LoginSessionContext& context, const std::exception& exception)
 	{
 		LOGE(_locator.LogService(),
 			std::format("handle message exception. session[{}:{}], exception: {}", 
 				context.session->Id().Value(), context.session->RemoteAddress(), exception.what()))
+
+		RemoveSession(*context.session);
+	}
+
+	void LoginServer::RemoveSession(const network::Session& session)
+	{
+		std::shared_ptr<LoginSessionContext> context = [&]() -> std::shared_ptr<LoginSessionContext>
+		{
+			std::shared_ptr<LoginSessionContext> result = {};
+			{
+				decltype(_sessions)::const_accessor accessor;
+
+				if (_sessions.find(accessor, session.Id().Value()))
+				{
+					result = std::move(accessor->second);
+					_sessions.erase(accessor);
+				}
+			}
+
+			return result;
+		}();
+
+		if (!context)
+		{
+			return;
+		}
+
+		context->strand.Post([this, context]()
+			{
+				if (context->state == LoginSessionState::LoggedIn)
+				{
+					(void)_locator.LoginService().Logout(context->authToken, context->accountId);
+				}
+			});
 	}
 }

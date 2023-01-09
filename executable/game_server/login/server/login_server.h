@@ -38,7 +38,9 @@ namespace cebreiro::login
 		void UnhandledException(network::Session& session, const std::exception& exception) override;
 
 	private:
-		void HandleMessageException(const LoginSessionContext& context, const std::exception& exception) const;
+		void HandleMessageException(const LoginSessionContext& context, const std::exception& exception);
+
+		void RemoveSession(const network::Session& session);
 
 	private:
 		const IServiceLocator& _locator;

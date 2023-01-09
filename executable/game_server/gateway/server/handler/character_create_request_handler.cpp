@@ -6,10 +6,11 @@
 #include "lib/game_base/type/equip_position.h"
 #include "lib/game_data/game_data_source.h"
 #include "lib/game_data/generated/skill_basic.h"
+#include "lib/game_service/service_locator_interface.h"
 #include "gateway/server/gateway_session_context.h"
 #include "gateway/server/handler/cs_message_handler_auto_registry.h"
 #include "gateway/message/sc/character_create_response.h"
-#include "service/service_locator.h"
+
 
 namespace cebreiro::gateway
 {

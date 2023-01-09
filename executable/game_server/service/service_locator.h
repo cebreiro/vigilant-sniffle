@@ -1,44 +1,10 @@
 #pragma once
 #include "lib/common/log/log_macro.h"
-#include "service/login_service_interface.h"
-#include "service/world_service_interface.h"
+#include "lib/game_service/service_locator_interface.h"
 
-namespace cebreiro::gamedata
-{
-	class GameDataSource;
-}
-
-namespace cebreiro::gamedb
-{
-	class GameDB;
-}
 
 namespace cebreiro
 {
-	class IServiceLocator
-	{
-	public:
-		virtual ~IServiceLocator() = default;
-
-		[[nodiscard]]
-		virtual auto LogService() const -> ILogService& = 0;
-
-		[[nodiscard]]
-		virtual auto GameDataSource() const -> gamedata::GameDataSource& = 0;
-
-		[[nodiscard]]
-		virtual auto LoginService() const -> ILoginService& = 0;
-
-		[[nodiscard]]
-		virtual auto WorldService(int8_t worldId) const -> IWorldService& = 0;
-
-		[[nodiscard]]
-		virtual auto WorldServices() const -> const std::vector<IWorldService*>& = 0;
-
-		[[nodiscard]]
-		virtual auto FindWorldService(int8_t worldId) const -> IWorldService* = 0;
-	};
-
 	class ServiceLocator : public IServiceLocator
 	{
 	public:

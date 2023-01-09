@@ -1,6 +1,6 @@
 #pragma once
 #include "lib/common/execution/thread_pool.h"
-#include "service/login_service_interface.h"
+#include "lib/game_service/login/login_service_interface.h"
 
 namespace cebreiro
 {
@@ -23,13 +23,11 @@ namespace cebreiro::login
 		~LoginService();
 
 		auto Login(std::string account, std::string password) -> Future<LoginResult> override;
-		auto Logout(int64_t accountId) -> Future<void> override;
+		auto Logout(AuthToken authToken, int64_t accountId) -> Future<void> override;
+		void AddLoginReleaseEventHandler(const std::function<void(int64_t)>& handler) override;
 
-		auto AddGatewayAuthentication(int64_t accountId, int8_t world, std::array<int32_t, 2> token)
-			-> Future<bool> override;
-
-		auto PopGatewayAuthentication(std::array<int32_t, 2> token)
-			-> Future<std::optional<std::pair<int64_t, int8_t>>> override;
+		auto SetWorldId(AuthToken authToken, int8_t world) -> Future<bool> override;
+		auto FindUser(AuthToken authToken) -> Future<std::optional<std::pair<int64_t, int8_t>>> override;
 
 	private:
 		auto Run() -> Future<void>;
@@ -39,6 +37,7 @@ namespace cebreiro::login
 		const IServiceLocator& _locator;
 		gamedb::GameDB& _gameDB;
 		std::unique_ptr<LoginUserContainer> _loginUserContainer;
+		std::vector<std::function<void(int64_t)>> _loginReleaseEventHandlers;
 
 		bool _shutdown = false;
 		Future<void> _runOperation;

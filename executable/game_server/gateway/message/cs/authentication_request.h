@@ -10,7 +10,8 @@ namespace cebreiro::gateway
 
 		void Deserialize(gamebase::PacketReader& reader) override;
 
-		std::array<int32_t, 2> token = {};
+		int32_t key1 = 0;
+		int32_t key2 = 0;
 		std::pair<int32_t, int32_t> unk = {};
 	};
 }

@@ -2,7 +2,7 @@
 
 #include "lib/common/stream/stream_writer.h"
 #include "lib/network/utility.h"
-#include "service/world_service_interface.h"
+#include "lib/game_service/world/world_service_interface.h"
 
 namespace cebreiro::login
 {

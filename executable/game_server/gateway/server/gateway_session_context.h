@@ -27,6 +27,7 @@ namespace cebreiro::gateway
 		std::shared_ptr<network::Session> session;
 		ThreadPool::Strand strand;
 		GatewaySessionState state = GatewaySessionState::Connected;
+		AuthToken authToken;
 		int64_t accountId = -1;
 		int8_t worldId = -1;
 		std::vector<gamedb::Character> characters;
