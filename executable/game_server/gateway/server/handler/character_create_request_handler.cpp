@@ -24,7 +24,7 @@ namespace cebreiro::gateway
 		if (context.state != GatewaySessionState::Authorized)
 		{
 			OnError(locator, context,
-				std::format("invalid request. state: {}, session: {}",
+				std::format("invalid request. state: {}, session[{}:{}]",
 					static_cast<int32_t>(context.state), session.Id().Value(), session.RemoteAddress()));
 			co_return;
 		}
@@ -32,7 +32,7 @@ namespace cebreiro::gateway
 		if (!message.IsValid(locator.GameDataSource()))
 		{
 			OnError(locator, context, 
-				std::format("CharacterCreateRequest message is invalid. session:[{}:{}]",
+				std::format("message is invalid. session:[{}:{}]",
 					session.Id().Value(), session.RemoteAddress()));
 
 			co_return;

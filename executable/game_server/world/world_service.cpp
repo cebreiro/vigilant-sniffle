@@ -31,9 +31,21 @@ namespace cebreiro::world
 		return _gameDB.CreateCharacter(std::move(character));
 	}
 
+	auto WorldService::DeleteCharacter(int64_t cid) -> Future<bool>
+	{
+		return _gameDB.DeleteCharacter(cid);
+	}
+
 	auto WorldService::GetCharacters(int64_t aid) -> Future<std::vector<gamedb::Character>>
 	{
-		return _gameDB.GetCharacters(aid);
+		std::vector<gamedb::Character> characters = co_await _gameDB.GetCharacters(aid);
+
+		std::erase_if(characters, [this](const gamedb::Character& character)
+			{
+				return character.base.wid != _worldId;
+			});
+
+		co_return characters;
 	}
 
 	auto WorldService::Id() const -> int8_t

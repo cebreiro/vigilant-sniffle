@@ -13,6 +13,7 @@ namespace cebreiro
 
 		virtual auto CheckCharacterNameUsable(std::string name) const -> Future<bool> = 0;
 		virtual auto CreateCharacter(gamedb::Character character) -> Future<bool> = 0;
+		virtual auto DeleteCharacter(int64_t cid) -> Future<bool> = 0;
 		virtual auto GetCharacters(int64_t aid) -> Future<std::vector<gamedb::Character>> = 0;
 
 		virtual auto Id() const -> int8_t = 0;

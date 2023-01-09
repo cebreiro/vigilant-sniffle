@@ -18,9 +18,9 @@ namespace cebreiro::world
 		WorldService(int8_t worldId, std::string address, gamedb::GameDB& gameDB);
 
 		auto GenerateCharacterId() -> Future<int64_t> override;
-
 		auto CheckCharacterNameUsable(std::string name) const -> Future<bool> override;
 		auto CreateCharacter(gamedb::Character character) -> Future<bool> override;
+		auto DeleteCharacter(int64_t cid) -> Future<bool> override;
 		auto GetCharacters(int64_t aid) -> Future<std::vector<gamedb::Character>> override;
 
 		auto Id() const -> int8_t override;

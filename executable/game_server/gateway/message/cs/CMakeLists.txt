@@ -4,4 +4,5 @@ authentication_request.cpp
 character_list_request.cpp
 character_name_check_request.cpp
 character_create_request.cpp
+character_delete_request.cpp
 )

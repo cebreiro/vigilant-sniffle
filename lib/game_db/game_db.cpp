@@ -173,6 +173,22 @@ namespace cebreiro::gamedb
 		co_return result;
 	}
 
+	auto GameDB::DeleteCharacter(int64_t cid) -> Future<bool>
+	{
+		Context& context = GetNextContext();
+		co_await context.strand;
+
+		odbc::Connection& connection = *context.connection;
+
+		// db_code_generator -> pk -> dependency on delete cascade
+		CharacterTable table(connection);
+
+		// TODO: return size_t;
+		table.RemoveByID(cid);
+
+		co_return true;
+	}
+
 	auto GameDB::GetCharacters(int64_t aid) -> Future<std::vector<Character>>
 	{
 		Context& context = GetNextContext();

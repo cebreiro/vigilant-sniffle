@@ -5,4 +5,5 @@ authentication_response.cpp
 character_list_response.cpp
 character_name_check_response.cpp
 character_create_response.cpp
+character_delete_response.cpp
 )
