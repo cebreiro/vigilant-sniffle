@@ -16,12 +16,6 @@ namespace cebreiro::gamedata
 
 namespace cebreiro
 {
-	class ILoginService;
-	class IWorldService;
-}
-
-namespace cebreiro
-{
 	class IServiceLocator
 	{
 	public:
