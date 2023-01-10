@@ -84,11 +84,6 @@ namespace cebreiro::login
 		_loginUserContainer->Remove(accountId);
 	}
 
-	void LoginService::AddSubscriber(LoginServiceEventType type, const std::function<void(const LoginServiceEvent&)>& handler)
-	{
-		_eventSubscribers[type].push_back(handler);
-	}
-
 	auto LoginService::SetWorldId(AuthToken authToken, int8_t world)
 		-> Future<bool>
 	{
@@ -133,6 +128,11 @@ namespace cebreiro::login
 		user->expireTimePoint.reset();
 
 		co_return std::pair(user->id, user->worldId.value());
+	}
+
+	void LoginService::AddSubscriber(LoginServiceEventType type, const std::function<void(const LoginServiceEvent&)>& handler)
+	{
+		_eventSubscribers[type].push_back(handler);
 	}
 
 	auto LoginService::Run() -> Future<void>
