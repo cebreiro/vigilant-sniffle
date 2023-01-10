@@ -7,6 +7,7 @@
 #include "lib/common/log/log_macro.h"
 #include "lib/game_db/game_db.h"
 #include "lib/game_service/service_locator_interface.h"
+#include "lib/game_service/login/event/duplicate_login.h"
 #include "login/service/detail/login_user_container.h"
 
 namespace cebreiro::login
@@ -42,9 +43,11 @@ namespace cebreiro::login
 
 		if (_loginUserContainer->Contains(result->id))
 		{
-			for (const std::function<void(int64_t)>& handler : _loginReleaseEventHandlers)
+			DuplicateLogin duplicateLogin(result->id);
+
+			for (const std::function<void(const LoginServiceEvent&)>& handler : _eventSubscribers[duplicateLogin.Type()])
 			{
-				handler(result->id);
+				handler(duplicateLogin);
 			}
 
 			_loginUserContainer->Remove(result->id);
@@ -81,9 +84,9 @@ namespace cebreiro::login
 		_loginUserContainer->Remove(accountId);
 	}
 
-	void LoginService::AddLoginReleaseEventHandler(const std::function<void(int64_t)>& handler)
+	void LoginService::AddSubscriber(LoginServiceEventType type, const std::function<void(const LoginServiceEvent&)>& handler)
 	{
-		_loginReleaseEventHandlers.push_back(handler);
+		_eventSubscribers[type].push_back(handler);
 	}
 
 	auto LoginService::SetWorldId(AuthToken authToken, int8_t world)

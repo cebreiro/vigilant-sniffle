@@ -1,5 +1,6 @@
 #pragma once
 #include "lib/network/accept_handler.h"
+#include "lib/network/session.h"
 #include "lib/network/session_handler.h"
 
 namespace cebreiro
@@ -46,7 +47,10 @@ namespace cebreiro::gateway
 		network::NetworkExecutor& _networkExecutor;
 		std::shared_ptr<network::Acceptor> _acceptor;
 
-		tbb::concurrent_hash_map<uint64_t, std::shared_ptr<GatewaySessionContext>> _sessions;
+		tbb::concurrent_hash_map<network::Session::Id_t, std::shared_ptr<GatewaySessionContext>> _sessions;
+
+		std::mutex _sessionsForIterationMutex;
+		std::vector<std::shared_ptr<GatewaySessionContext>> _sessionsForIteration;
 
 		std::atomic<bool> _shutdown = false;
 		std::atomic<uint64_t> _nextSessionId = 1;

@@ -24,7 +24,7 @@ namespace cebreiro::login
 
 		auto Login(std::string account, std::string password) -> Future<LoginResult> override;
 		auto Logout(AuthToken authToken, int64_t accountId) -> Future<void> override;
-		void AddLoginReleaseEventHandler(const std::function<void(int64_t)>& handler) override;
+		void AddSubscriber(LoginServiceEventType type, const std::function<void(const LoginServiceEvent&)>& handler) override;
 
 		auto SetWorldId(AuthToken authToken, int8_t world) -> Future<bool> override;
 		auto FindUser(AuthToken authToken) -> Future<std::optional<std::pair<int64_t, int8_t>>> override;
@@ -37,7 +37,7 @@ namespace cebreiro::login
 		const IServiceLocator& _locator;
 		gamedb::GameDB& _gameDB;
 		std::unique_ptr<LoginUserContainer> _loginUserContainer;
-		std::vector<std::function<void(int64_t)>> _loginReleaseEventHandlers;
+		std::unordered_map<LoginServiceEventType, std::vector<std::function<void(const LoginServiceEvent&)>>> _eventSubscribers;
 
 		bool _shutdown = false;
 		Future<void> _runOperation;

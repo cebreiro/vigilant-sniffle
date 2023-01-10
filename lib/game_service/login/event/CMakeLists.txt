@@ -1,0 +1,4 @@
+target_sources(game_service PRIVATE
+login_service_event.cpp
+duplicate_login.cpp
+)

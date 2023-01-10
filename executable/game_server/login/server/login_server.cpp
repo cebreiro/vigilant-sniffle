@@ -4,8 +4,9 @@
 #include "lib/network/acceptor.h"
 #include "lib/network/session.h"
 #include "lib/game_service/service_locator_interface.h"
-#include "config/server_constant.h"
 #include "lib/common/log/log_macro.h"
+#include "lib/game_service/login/event/duplicate_login.h"
+#include "config/server_constant.h"
 #include "login/message/cs/cs_message_type.h"
 #include "login/message/sc/hello.h"
 #include "login/server/handler/cs_message_handler.h"
@@ -28,13 +29,19 @@ namespace cebreiro::login
 	{
 		_acceptor->StartAccept();
 
-		_locator.LoginService().AddLoginReleaseEventHandler([this](int64_t id)
+		_locator.LoginService().AddSubscriber(LoginServiceEventType::DuplicateLogin,
+			[this](const LoginServiceEvent& event)
 			{
-				decltype(_sessions)::const_accessor accesor;
+				assert(event.Type() == DuplicateLogin::TYPE);
+				const DuplicateLogin& duplicateLogin = static_cast<const DuplicateLogin&>(event);
 
-				if (_sessions.find(accesor, id))
+				std::lock_guard lock(_sessionsForIterationMutex);
+				for (const std::shared_ptr<LoginSessionContext>& context : _sessionsForIteration)
 				{
-					accesor->second->session->Close();
+					if (context->accountId == duplicateLogin.accountId)
+					{
+						context->session->Close();
+					}
 				}
 			});
 	}
@@ -63,18 +70,21 @@ namespace cebreiro::login
 			.accountId = -1,});
 
 		{
-			uint64_t sessionId = session->Id().Value();
-
 			decltype(_sessions)::accessor accessor;
-			if (_sessions.insert(accessor, sessionId))
+			if (_sessions.insert(accessor, session->Id()))
 			{
-				accessor->second = std::move(context);
+				accessor->second = context;
+
+				std::lock_guard lock(_sessionsForIterationMutex);
+				_sessionsForIteration.push_back(std::move(context));
 			}
 			else
 			{
 				LOGC(_locator.LogService(),
-					std::format("fail to insert session. duplicated id: {}", sessionId))
-					session->Close();
+					std::format("fail to insert session. duplicated id: {}, address: {}",
+						session->Id().Value(), session->RemoteAddress()))
+
+				session->Close();
 				return;
 			}
 		}
@@ -125,7 +135,7 @@ namespace cebreiro::login
 			std::format("session[{}:{}] receive buffer: {}",
 				session.Id().Value(), session.RemoteAddress(), cebreiro::ToString(buffer.Data(), buffer.Size())))
 
-		auto context = [this, id = session.Id().Value()]() -> std::shared_ptr<LoginSessionContext>
+		auto context = [this, id = session.Id()]() -> std::shared_ptr<LoginSessionContext>
 		{
 			decltype(_sessions)::const_accessor accessor;
 
@@ -233,10 +243,16 @@ namespace cebreiro::login
 			{
 				decltype(_sessions)::const_accessor accessor;
 
-				if (_sessions.find(accessor, session.Id().Value()))
+				if (_sessions.find(accessor, session.Id()))
 				{
-					result = std::move(accessor->second);
+					result = accessor->second;
 					_sessions.erase(accessor);
+
+					std::lock_guard lock(_sessionsForIterationMutex);
+					std::erase_if(_sessionsForIteration, [&result](const std::shared_ptr<LoginSessionContext>& context)
+						{
+							return context == result;
+						});
 				}
 			}
 
