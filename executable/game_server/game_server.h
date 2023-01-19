@@ -1,6 +1,7 @@
 #pragma once
 #include "config/server_config.h"
 #include "service/service_locator.h"
+#include "zone/server/zone_server.h"
 
 namespace cebreiro
 {
@@ -60,6 +61,7 @@ namespace cebreiro
 
 		std::shared_ptr<login::LoginServer> _loginServer;
 		std::shared_ptr<gateway::GatewayServer> _gatewayServer;
+		std::shared_ptr<zone::ZoneServer> _zoneServer;
 
 		std::vector<std::function<void()>> _finalizers;
 	};

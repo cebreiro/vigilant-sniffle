@@ -3,12 +3,10 @@
 #include <chrono>
 #include <string>
 
+#include "lib/common/global.h"
+
 namespace cebreiro
 {
-	// intended
-	using clock_t = std::chrono::system_clock;
-	using time_point_t = clock_t::time_point;
-
 	auto Now() -> uint64_t;
 	auto ToString(const time_point_t& tp, const char* format = "%Y-%m-%d %H:%M:%S") -> std::string;
 	auto ToDate(const time_point_t& tp) -> std::string;

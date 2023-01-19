@@ -1,0 +1,4 @@
+target_sources(game_server PRIVATE
+zone_packet_decoder.cpp
+zone_packet_encoder.cpp
+)

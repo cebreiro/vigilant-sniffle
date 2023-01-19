@@ -23,6 +23,7 @@ namespace cebreiro::world
 		auto CheckCharacterNameUsable(std::string name) const -> Future<bool> override;
 		auto CreateCharacter(gamedb::Character character) -> Future<bool> override;
 		auto DeleteCharacter(int64_t cid) -> Future<bool> override;
+		auto GetCharacter(int64_t cid) -> Future<std::optional<gamedb::Character>> override;
 		auto GetCharacters(int64_t aid) -> Future<std::vector<gamedb::Character>> override;
 
 		auto Id() const -> int8_t override;

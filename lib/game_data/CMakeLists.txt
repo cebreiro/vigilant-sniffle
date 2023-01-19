@@ -10,6 +10,8 @@ TBB::tbb
 
 target_sources(game_data PRIVATE
 game_data_source.cpp
- "utility/item.h" "utility/item.cpp")
+)
 
 add_subdirectory(generated)
+add_subdirectory(refined)
+add_subdirectory(utility)

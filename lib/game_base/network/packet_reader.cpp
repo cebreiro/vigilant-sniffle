@@ -10,10 +10,14 @@
 
 namespace cebreiro::gamebase
 {
+	PacketReader::PacketReader(const std::span<const char>& buffer, size_t offset)
+		: _reader(buffer.data(), buffer.size(), offset)
+	{
+		Parse();
+	}
+
 	PacketReader::PacketReader(const network::Buffer& buffer)
-		: _reader(buffer.Data(), buffer.Size(), 11)
-		, _iter(_offsets.end())
-		, _end(_offsets.end())
+		: PacketReader(std::span(buffer.Data(), buffer.Size()), 11)
 	{
 		if (!HasValidPacketHeader())
 		{
@@ -21,8 +25,6 @@ namespace cebreiro::gamebase
 				std::format("invalid packet header. recv: {}",
 					ToString(_reader.GetData(), _reader.GetSize())));
 		}
-
-		Parse();
 	}
 
 	auto PacketReader::ReadInt8() -> int8_t
@@ -42,11 +44,6 @@ namespace cebreiro::gamebase
 
 	auto PacketReader::ReadInt64() -> std::pair<int32_t, int32_t>
 	{
-		if (_iter == _end)
-		{
-			throw StacktraceException("packet_reader out of range");
-		}
-
 		Next();
 
 		constexpr uint8_t expected = 0x81ui8 + 8;
@@ -65,11 +62,6 @@ namespace cebreiro::gamebase
 
 	auto PacketReader::ReadString() -> std::string
 	{
-		if (_iter == _end)
-		{
-			throw StacktraceException("packet_reader out of range");
-		}
-
 		Next();
 
 		uint8_t type = _reader.ReadUInt8();
@@ -83,11 +75,6 @@ namespace cebreiro::gamebase
 
 	auto PacketReader::ReadObject() -> StreamReader
 	{
-		if (_iter == _end)
-		{
-			throw StacktraceException("packet_reader out of range");
-		}
-
 		Next();
 
 		const uint8_t type = _reader.ReadUInt8();
@@ -99,14 +86,14 @@ namespace cebreiro::gamebase
 		return StreamReader(_reader.GetData() + _reader.GetOffset(), size);
 	}
 
+	auto PacketReader::GetDebugString() const -> std::string
+	{
+		return ToString(_reader.GetData(), _reader.GetSize());
+	}
+
 	template <typename T>
 	auto PacketReader::Read() -> std::enable_if_t<std::is_arithmetic_v<T>&& std::is_signed_v<T>, T>
 	{
-		if (_iter == _end)
-		{
-			throw StacktraceException("packet_reader out of range");
-		}
-
 		Next();
 
 		constexpr auto expected = static_cast<uint8_t>(Serialized<T>::TYPE);
@@ -202,14 +189,18 @@ namespace cebreiro::gamebase
 					ToString(_reader.GetData(), _reader.GetSize())));
 		}
 
-		_iter = _offsets.rbegin();
-		_end = _offsets.rend();
+		std::ranges::reverse(_offsets);
 	}
 
 	void PacketReader::Next()
 	{
-		_reader.SetOffset(*_iter);
-		++_iter;
+		if (index >= _offsets.size())
+		{
+			throw StacktraceException("packet_reader out of range");
+		}
+
+		_reader.SetOffset(_offsets[index]);
+		++index;
 	}
 
 	void PacketReader::ThrowIfInvalidPacketType(uint8_t expected, uint8_t result) const

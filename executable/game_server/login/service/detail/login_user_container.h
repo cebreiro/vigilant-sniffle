@@ -3,14 +3,26 @@
 
 namespace cebreiro::login
 {
+	enum class LoginUserState
+	{
+		LoggedIn,
+		GatewayTransition,
+		GatewayConsumed,
+		ZoneTransition,
+		ZoneConsumed,
+	};
+
 	struct LoginUser
 	{
 		int64_t id = -1;
-		std::string account;
-		uint64_t loginTimePoint = 0;
-		std::optional<int8_t> worldId = std::nullopt;
+		LoginUserState state = LoginUserState::LoggedIn;
 		AuthToken authenticationToken;
+		std::string account;
+		std::optional<int8_t> worldId = std::nullopt;
+		std::optional<int32_t> zoneId = std::nullopt;
+		std::optional<int64_t> characterId = std::nullopt;
 		std::optional<uint64_t> expireTimePoint = std::nullopt;
+		uint64_t loginTimePoint = 0;
 	};
 
 	class LoginUserContainer

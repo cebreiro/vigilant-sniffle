@@ -63,11 +63,13 @@ namespace cebreiro::login
 
 			return LoginUser{
 				.id = account.id,
+				.state = LoginUserState::LoggedIn,
+				.authenticationToken = AuthToken(rnd(), rnd()),
 				.account = account.account,
 				.loginTimePoint = Now(),
-				.authenticationToken = AuthToken(rnd(), rnd()),
 			};
 		}(result.value());
+
 		_loginUserContainer->Add(loginUserData);
 
 		co_return LoginResult{
@@ -84,50 +86,147 @@ namespace cebreiro::login
 		_loginUserContainer->Remove(accountId);
 	}
 
-	auto LoginService::SetWorldId(AuthToken authToken, int8_t world)
+	auto LoginService::ConfigureGatewayTransitionState(AuthToken authToken, int8_t world)
 		-> Future<bool>
-	{
-		co_await _strand;
-
-		LoginUser* loginUser = _loginUserContainer->Find(authToken);
-		if (!loginUser)
-		{
-			LOGE(_locator.LogService(),
-				std::format("fail to find login user. token: {}", authToken.ToString()))
-			co_return false;
-		}
-
-		if (loginUser->worldId.has_value())
-		{
-			LOGE(_locator.LogService(),
-				std::format("login user already has world. account: {}, world[old:{}, new:{}]", 
-					loginUser->account, loginUser->worldId.value(), world))
-			co_return false;
-		}
-
-		loginUser->worldId = world;
-		loginUser->expireTimePoint = Now() + 10000;
-
-		co_return true;
-	}
-
-	auto LoginService::FindUser(AuthToken authToken)
-		-> Future<std::optional<std::pair<int64_t, int8_t>>>
 	{
 		co_await _strand;
 
 		LoginUser* user = _loginUserContainer->Find(authToken);
 		if (!user)
 		{
-			LOGW(_locator.LogService(),
+			LOGE(_locator.LogService(),
+				std::format("fail to find login user. token: {}", authToken.ToString()))
+			co_return false;
+		}
+
+		if (user->state != LoginUserState::LoggedIn)
+		{
+			LOGE(_locator.LogService(),
+				std::format("invalid state. account: {}, state: {}, token: {}", 
+					user->account, static_cast<int32_t>(user->state), authToken.ToString()))
+			co_return false;
+		}
+
+		if (user->worldId.has_value())
+		{
+			LOGE(_locator.LogService(),
+				std::format("login user already has world. account: {}, world[old:{}, new:{}]", 
+					user->account, user->worldId.value(), world))
+			co_return false;
+		}
+
+		user->state = LoginUserState::GatewayTransition;
+		user->worldId = world;
+		user->expireTimePoint = Now() + 10000;
+
+		co_return true;
+	}
+
+	auto LoginService::ConsumeGatewayTransitionState(AuthToken authToken)
+		-> Future<GatewayTransitionMethod::ConsumeResult>
+	{
+		co_await _strand;
+
+		LoginUser* user = _loginUserContainer->Find(authToken);
+		if (!user)
+		{
+			LOGE(_locator.LogService(),
 				std::format("fail to find login user from token. token: [{}]", authToken.ToString()))
-			co_return std::nullopt;
+
+			co_return GatewayTransitionMethod::ConsumeResult{
+				.success = false,
+			};
+		}
+
+		if (user->state != LoginUserState::GatewayTransition)
+		{
+			LOGE(_locator.LogService(),
+				std::format("invalid state. account: {}, state: {}, token: {}",
+					user->account, static_cast<int32_t>(user->state), authToken.ToString()))
+
+			co_return GatewayTransitionMethod::ConsumeResult{
+				.success = false,
+			};
 		}
 
 		assert(user->worldId);
+		user->state = LoginUserState::GatewayConsumed;
 		user->expireTimePoint.reset();
 
-		co_return std::pair(user->id, user->worldId.value());
+		co_return GatewayTransitionMethod::ConsumeResult{
+			.success = true,
+			.accountId = user->id,
+			.worldId = user->worldId.value(),
+		};
+	}
+
+	auto LoginService::ConfigureZoneTransitionState(AuthToken authToken, ConfigureParam param) -> Future<bool>
+	{
+		co_await _strand;
+
+		LoginUser* user = _loginUserContainer->Find(authToken);
+		if (!user)
+		{
+			LOGE(_locator.LogService(),
+				std::format("fail to find login user from token. token: [{}]", authToken.ToString()))
+
+			co_return false;
+		}
+
+		if (user->state != LoginUserState::GatewayConsumed && user->state != LoginUserState::ZoneConsumed)
+		{
+			LOGE(_locator.LogService(),
+				std::format("invalid state. account: {}, state: {}, token: {}",
+					user->account, static_cast<int32_t>(user->state), authToken.ToString()))
+
+			co_return false;
+		}
+
+		user->state = LoginUserState::ZoneTransition;
+		user->zoneId = param.zoneId;
+		user->characterId = param.characterId;
+		user->expireTimePoint = Now() + 10000;
+
+		co_return true;
+	}
+
+	auto LoginService::ConsumeZoneTransitionState(AuthToken authToken) -> Future<ZoneTransitionMethod::ConsumeResult>
+	{
+		co_await _strand;
+
+		LoginUser* user = _loginUserContainer->Find(authToken);
+		if (!user)
+		{
+			LOGE(_locator.LogService(),
+				std::format("fail to find login user from token. token: [{}]", authToken.ToString()))
+
+			co_return ZoneTransitionMethod::ConsumeResult{
+				.success = false,
+			};
+		}
+
+		if (user->state != LoginUserState::ZoneTransition)
+		{
+			LOGE(_locator.LogService(),
+				std::format("invalid state. account: {}, state: {}, token: {}",
+					user->account, static_cast<int32_t>(user->state), authToken.ToString()))
+
+			co_return ZoneTransitionMethod::ConsumeResult{
+				.success = false,
+			};
+		}
+
+		assert(user->worldId);
+		user->state = LoginUserState::GatewayConsumed;
+		user->expireTimePoint.reset();
+
+		co_return ZoneTransitionMethod::ConsumeResult{
+			.success = true,
+			.accountId = user->id,
+			.worldId = user->worldId.value(),
+			.zoneId = user->zoneId.value(),
+			.characterId = user->characterId.value(),
+		};
 	}
 
 	void LoginService::AddSubscriber(LoginServiceEventType type, const std::function<void(const LoginServiceEvent&)>& handler)

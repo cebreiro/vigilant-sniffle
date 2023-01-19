@@ -35,6 +35,7 @@ namespace cebreiro::gamedb
 		auto CheckCharacterNameUsable(std::string name) -> Future<bool>;
 		auto CreateCharacter(Character character) -> Future<bool>;
 		auto DeleteCharacter(int64_t cid) -> Future<bool>;
+		auto GetCharacter(int64_t cid) -> Future<std::optional<Character>>;
 		auto GetCharacters(int64_t aid) -> Future<std::vector<Character>>;
 
 	private:

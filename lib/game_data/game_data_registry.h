@@ -3,12 +3,21 @@
 
 namespace cebreiro::gamedata
 {
-	template <typename T>
+	template <GameDataTableConcept T>
 	struct GameDataRegistry
 	{
 		GameDataRegistry()
 		{
 			GameDataSource::AddFactory<T>();
+		}
+	};
+
+	template <GameDataRefinedTableConcept T>
+	struct GameRefinedDataRegistry
+	{
+		GameRefinedDataRegistry()
+		{
+			GameDataSource::AddRefinedTableFactory<T>();
 		}
 	};
 }

@@ -44,7 +44,13 @@ target_precompile_headers(game_server PRIVATE
 <typeindex>
 <format>
 <tbb/concurrent_hash_map.h>
+<boost/container/small_vector.hpp>
+<boost/container/flat_map.hpp>
 <lib/common/global.h>
+<lib/common/execution/future.h>
+<lib/common/execution/future_await.h>
+<lib/common/execution/executor_await.h>
+<lib/common/stacktrace_exception.h>
 )
 
 find_package(TBB CONFIG REQUIRED)
@@ -71,3 +77,4 @@ add_subdirectory(login)
 add_subdirectory(gateway)
 add_subdirectory(service)
 add_subdirectory(world)
+add_subdirectory(zone)

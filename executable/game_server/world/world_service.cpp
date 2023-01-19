@@ -43,6 +43,11 @@ namespace cebreiro::world
 		return _gameDB.DeleteCharacter(cid);
 	}
 
+	auto WorldService::GetCharacter(int64_t cid) -> Future<std::optional<gamedb::Character>>
+	{
+		return _gameDB.GetCharacter(cid);
+	}
+
 	auto WorldService::GetCharacters(int64_t aid) -> Future<std::vector<gamedb::Character>>
 	{
 		std::vector<gamedb::Character> characters = co_await _gameDB.GetCharacters(aid);

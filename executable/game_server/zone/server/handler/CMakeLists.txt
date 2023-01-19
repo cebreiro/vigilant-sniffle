@@ -1,0 +1,6 @@
+target_sources(game_server PRIVATE
+cs_message_handler_auto_registry.cpp
+cs_message_handler_container.cpp
+login_handler.cpp
+trigger_event_handler.cpp
+)

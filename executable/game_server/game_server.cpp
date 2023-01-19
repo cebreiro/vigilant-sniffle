@@ -9,6 +9,7 @@
 #include "login/service/login_service.h"
 #include "login/server/login_server.h"
 #include "world/world_service.h"
+#include "zone/game/zone.h"
 
 namespace cebreiro
 {
@@ -182,6 +183,21 @@ namespace cebreiro
 			LOGI(*_logService, "initialize GatewayServer DONE")
 		};
 		initializeGatewayServer();
+
+		auto initializeZoneServer = [this]()
+		{
+			_zoneServer = std::make_shared<zone::ZoneServer>(_serviceLocator, *_networkExecutor,
+				7878, std::make_shared<zone::Zone>(_serviceLocator));
+			_zoneServer->Start();
+
+			_finalizers.emplace_back([this]()
+				{
+					_zoneServer->Stop();
+				});
+
+			LOGI(*_logService, "initialize ZoneServer DONE")
+		};
+		initializeZoneServer();
 	}
 
 	void GameServer::Finalize()

@@ -109,24 +109,24 @@ namespace cebreiro::gateway
 		};
 
 		auto skillView = locator.GameDataSource().Get<gamedata::SkillBasicTable>()->Get()
-		| srv::filter([&](const gamedata::SkillBasic& data)
-			{
-				return data.job1 == message.job1 && data.levelQualification <= 1;
-			})
-		| srv::transform([&](const gamedata::SkillBasic& data) -> gamebase::CharacterSkill
-			{
-				return gamebase::CharacterSkill{
-					.cid = cid,
-					.skill_id = data.index,
-					.job = message.job1,
-					.level = 1,
-					.cooldown = 0,
-					.page = -1,
-					.x = -1,
-					.y = -1,
-					.is_in_quick = false
-				};
-			});
+			| srv::filter([&](const gamedata::SkillBasic& data)
+				{
+					return data.job1 == message.job1 && data.levelQualification <= 1;
+				})
+			| srv::transform([&](const gamedata::SkillBasic& data) -> gamebase::CharacterSkill
+				{
+					return gamebase::CharacterSkill{
+						.cid = cid,
+						.skill_id = data.index,
+						.job = message.job1,
+						.level = 1,
+						.cooldown = 0,
+						.page = -1,
+						.x = -1,
+						.y = -1,
+						.is_in_quick = false
+					};
+				});
 
 		co_return gamedb::Character{
 			.base = gamebase::Character{

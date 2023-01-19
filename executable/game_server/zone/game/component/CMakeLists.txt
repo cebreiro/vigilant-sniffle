@@ -1,0 +1,10 @@
+target_sources(game_server PRIVATE
+component_base.cpp
+movement_component.cpp
+player_appearance_component.cpp
+player_job_component.cpp
+player_skill_component.cpp
+player_stat_component.cpp
+player_slot_component.cpp
+item_position_component.cpp
+)

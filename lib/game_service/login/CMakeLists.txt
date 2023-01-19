@@ -3,3 +3,4 @@ auth_token.cpp
 )
 
 add_subdirectory(event)
+add_subdirectory(method)

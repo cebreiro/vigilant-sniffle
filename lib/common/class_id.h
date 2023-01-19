@@ -4,24 +4,24 @@
 namespace cebreiro
 {
 	template <typename T, typename ID = uint64_t>
-	struct TypeId
+	class ClassId
 	{
 	public:
 		template <typename U>
-		static ID GetId();
+		static auto GetId() -> ID;
 
 	private:
-		static ID _NEXT_ID;
+		static ID _nextId;
 	};
 
 	template <typename T, typename ID>
 	template <typename U>
-	ID TypeId<T, ID>::GetId()
+	auto ClassId<T, ID>::GetId() -> ID
 	{
-		static ID id{ _NEXT_ID++ };
+		static ID id{ _nextId++ };
 		return id;
 	}
 
 	template <typename T, typename ID>
-	ID TypeId<T, ID>::_NEXT_ID = 0;
+	ID ClassId<T, ID>::_nextId = 0;
 }

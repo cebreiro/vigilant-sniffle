@@ -189,6 +189,46 @@ namespace cebreiro::gamedb
 		co_return true;
 	}
 
+	auto GameDB::GetCharacter(int64_t cid) -> Future<std::optional<Character>>
+	{
+		Context& context = GetNextContext();
+		co_await context.strand;
+
+		odbc::Connection& connection = *context.connection;
+
+		CharacterTable table(connection);
+		CharacterStatTable statTable(connection);
+		CharacterJobTable jobTable(connection);
+		CharacterItemTable itemTable(connection);
+		CharacterSkillTable skillTable(connection);
+
+		std::optional<gamebase::Character> character = table.FindByID(cid);
+		if (!character.has_value())
+		{
+			co_return std::nullopt;
+		}
+
+		co_return [&](const gamebase::Character& base)
+			{
+				std::optional<gamebase::CharacterStat> stat = statTable.FindByCID(base.id);
+				std::optional<gamebase::CharacterJob> job = jobTable.FindByCID(base.id);
+
+				if (!stat.has_value() || !job.has_value())
+				{
+					throw StacktraceException(
+						std::format("fail to find character stat. cid: {}", base.id));
+				}
+
+				return Character{
+					.base = base,
+					.stat = std::move(stat.value()),
+					.job = std::move(job.value()),
+					.items = itemTable.FindByCID(base.id),
+					.skills = skillTable.FindByCID(base.id),
+				};
+			}(*character);
+	}
+
 	auto GameDB::GetCharacters(int64_t aid) -> Future<std::vector<Character>>
 	{
 		Context& context = GetNextContext();
@@ -207,16 +247,16 @@ namespace cebreiro::gamedb
 				std::optional<gamebase::CharacterStat> stat = statTable.FindByCID(base.id);
 				std::optional<gamebase::CharacterJob> job = jobTable.FindByCID(base.id);
 
-				if (!stat.has_value())
+				if (!stat.has_value() || !job.has_value())
 				{
 					throw StacktraceException(
-						std::format("fail to find character stat. cid: {}", base.id));
+						std::format("fail to find character data. cid: {}", base.id));
 				}
 
 				return Character{
 					.base = base,
-					.stat = std::move(stat.value()),
-					.job = std::move(job.value()),
+					.stat = stat.value(),
+					.job = job.value(),
 					.items = itemTable.FindByCID(base.id),
 					.skills = skillTable.FindByCID(base.id),
 				};

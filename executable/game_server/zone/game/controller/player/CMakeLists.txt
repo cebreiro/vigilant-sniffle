@@ -1,0 +1,3 @@
+target_sources(game_server PRIVATE
+remote_player_controller.cpp
+)

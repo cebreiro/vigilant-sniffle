@@ -17,7 +17,12 @@ namespace cebreiro::gateway
 		int32_t length = *reinterpret_cast<const int32_t*>(buffer.data());
 		DecodeBuffer(reinterpret_cast<char*>(&length), sizeof(length));
 
-		if (buffer.size() < length)
+		if (length <= 0)
+		{
+			return std::unexpected(DecodeError::ErrorInvalidHead);
+		}
+
+		if (buffer.size() < static_cast<size_t>(length))
 		{
 			return std::unexpected(DecodeError::ErrorShortLength);
 		}

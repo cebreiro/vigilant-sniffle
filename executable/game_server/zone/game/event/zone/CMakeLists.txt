@@ -1,0 +1,8 @@
+target_sources(game_server PRIVATE
+zone_event_type.cpp
+zone_event_request_handler.cpp
+zone_event_request_handler_factory.cpp
+state_all_request.cpp
+)
+
+add_subdirectory(item_archive)

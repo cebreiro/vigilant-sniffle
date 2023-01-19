@@ -17,6 +17,8 @@ namespace cebreiro
 		auto ToString() const -> std::string;
 		auto ToIntArray() const -> std::array<int32_t, 2>;
 
+		static auto FromString(std::string_view str) -> AuthToken;
+
 	private:
 		int32_t _key1 = 0;
 		int32_t _key2 = 0;

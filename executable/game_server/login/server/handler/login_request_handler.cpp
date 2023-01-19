@@ -3,7 +3,6 @@
 #include "lib/common/execution/future_await.h"
 #include "lib/common/log/log_macro.h"
 #include "lib/network/session.h"
-#include "lib/game_service/login/login_result.h"
 #include "lib/game_service/service_locator_interface.h"
 #include "login/message/sc/login_fail_response.h"
 #include "login/message/sc/world_list_notify.h"
@@ -21,8 +20,9 @@ namespace cebreiro::login
 	{
 		network::Session& session = *context.session;
 
-		LoginResult result = 
-			co_await locator.LoginService().Login(message.account, message.password)
+		using service::LoginMethod;
+
+		LoginMethod::LoginResult result = co_await locator.LoginService().Login(message.account, message.password)
 			.ConfigureAwait(context.strand);
 		
 		if (context.state != LoginSessionState::Connected)
@@ -33,15 +33,15 @@ namespace cebreiro::login
 			co_return;
 		}
 
-		if (result.errorCode != LoginResult::ErrorCode::Success)
+		if (result.errorCode != LoginMethod::LoginResult::ErrorCode::Success)
 		{
-			LoginFailReason failReason = [](LoginResult::ErrorCode errorCode)
+			LoginFailReason failReason = [](LoginMethod::LoginResult::ErrorCode errorCode)
 			{
 				switch (errorCode)
 				{
-				case LoginResult::ErrorCode::FailDuplicated: 
+				case LoginMethod::LoginResult::ErrorCode::FailDuplicated:
 					return LoginFailReason::ReleaseExistingConnection;
-				case LoginResult::ErrorCode::FailTimeout:
+				case LoginMethod::LoginResult::ErrorCode::FailTimeout:
 					return LoginFailReason::CantConnectServer;
 				default:
 					return LoginFailReason::InvalidIDPassword;

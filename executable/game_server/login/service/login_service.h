@@ -25,8 +25,11 @@ namespace cebreiro::login
 		auto Login(std::string account, std::string password) -> Future<LoginResult> override;
 		auto Logout(AuthToken authToken, int64_t accountId) -> Future<void> override;
 
-		auto SetWorldId(AuthToken authToken, int8_t world) -> Future<bool> override;
-		auto FindUser(AuthToken authToken) -> Future<std::optional<std::pair<int64_t, int8_t>>> override;
+		auto ConfigureGatewayTransitionState(AuthToken authToken, int8_t world) -> Future<bool> override;
+		auto ConsumeGatewayTransitionState(AuthToken authToken) -> Future<GatewayTransitionMethod::ConsumeResult> override;
+
+		auto ConfigureZoneTransitionState(AuthToken authToken, ConfigureParam param) -> Future<bool> override;
+		auto ConsumeZoneTransitionState(AuthToken authToken) -> Future<ZoneTransitionMethod::ConsumeResult> override;
 
 		void AddSubscriber(LoginServiceEventType type, const std::function<void(const LoginServiceEvent&)>& handler) override;
 

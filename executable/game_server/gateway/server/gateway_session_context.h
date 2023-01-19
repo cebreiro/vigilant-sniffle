@@ -1,5 +1,6 @@
 #pragma once
 #include "lib/common/execution/thread_pool.h"
+#include "lib/game_service/login/auth_token.h"
 #include "lib/game_db/entity/character.h"
 
 namespace cebreiro::network

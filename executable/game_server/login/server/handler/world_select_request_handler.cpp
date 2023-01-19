@@ -28,7 +28,7 @@ namespace cebreiro::login
 			co_return;
 		}
 
-		bool result = co_await locator.LoginService().SetWorldId(context.authToken, message.worldId)
+		bool result = co_await locator.LoginService().ConfigureGatewayTransitionState(context.authToken, message.worldId)
 			.ConfigureAwait(context.strand);
 
 		if (!result)

@@ -7,4 +7,5 @@ character_list_request_handler.cpp
 character_name_check_request_handler.cpp
 character_create_request_handler.cpp
 character_delete_request_handler.cpp
+character_select_request_handler.cpp
 )

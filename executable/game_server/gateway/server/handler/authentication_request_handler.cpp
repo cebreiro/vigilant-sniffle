@@ -21,7 +21,7 @@ namespace cebreiro::gateway
 
 		AuthToken authToken(message.key1, message.key2);
 
-		std::optional<std::pair<int64_t, int8_t>> result = co_await locator.LoginService().FindUser(authToken)
+		const auto& result = co_await locator.LoginService().ConsumeGatewayTransitionState(authToken)
 			.ConfigureAwait(context.strand);
 
 		if (context.state != GatewaySessionState::VersionChecked)
@@ -32,7 +32,7 @@ namespace cebreiro::gateway
 			co_return;
 		}
 
-		if (!result.has_value())
+		if (!result.success)
 		{
 			OnError(locator, context,
 				std::format("fail to authorize session[{}, {}]",
@@ -42,9 +42,9 @@ namespace cebreiro::gateway
 
 		context.state = GatewaySessionState::Authorized;
 		context.authToken = authToken;
-		context.accountId = result->first;
-		context.worldId = result->second;
-		context.characters = co_await locator.WorldService(result->second).GetCharacters(context.accountId)
+		context.accountId = result.accountId;
+		context.worldId = result.worldId;
+		context.characters = co_await locator.WorldService(context.worldId).GetCharacters(context.accountId)
 			.ConfigureAwait(context.strand);
 
 		session.Send(AuthenticationResponse(true).Serialize());

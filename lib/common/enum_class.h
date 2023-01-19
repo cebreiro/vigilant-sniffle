@@ -21,8 +21,14 @@ BOOST_PP_IF(BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(elementTuple), 3),               
 #define DEFINE_CASE_HAVING_ONLY_ENUM_ELEMENT_NAME(enumName, element)                    \
     case enumName::element : return BOOST_PP_STRINGIZE(element);
 
-#define GENERATE_CASE_FOR_SWITCH(r, enumName, elementTuple)                     \
+#define GENERATE_CASE_FOR_SWITCH(r, enumName, elementTuple)                             \
     DEFINE_CASE_HAVING_ONLY_ENUM_ELEMENT_NAME(enumName, BOOST_PP_TUPLE_ELEM(0, elementTuple))
+
+#define DEFINE_CASE_HAVING_ONLY_RETURN_TRUE(enumName, element) \
+    case enumName::element : return true;
+
+#define GENERATE_CASE_FOR_IS_VALID_SWITCH(r, enumName, elementTuple)                    \
+    DEFINE_CASE_HAVING_ONLY_RETURN_TRUE(enumName, BOOST_PP_TUPLE_ELEM(0, elementTuple))
 
 // ENUM_CLASS(Name, type,
 // (NAME0, value0)
@@ -44,5 +50,15 @@ inline const char* ToString(const enumName element) {                           
                 ADD_PARENTHESES_FOR_EACH_TUPLE_IN_SEQ(enumElements)             \
             )                                                                   \
             default: return "[Unknown " BOOST_PP_STRINGIZE(enumName) "]";       \
+        }                                                                       \
+}                                                                               \
+inline bool IsValid(const enumName element) {                                   \
+        switch (element) {                                                      \
+            BOOST_PP_SEQ_FOR_EACH(                                              \
+                GENERATE_CASE_FOR_IS_VALID_SWITCH,                              \
+                enumName,                                                       \
+                ADD_PARENTHESES_FOR_EACH_TUPLE_IN_SEQ(enumElements)             \
+            )                                                                   \
+            default: return false;                                              \
         }                                                                       \
 }

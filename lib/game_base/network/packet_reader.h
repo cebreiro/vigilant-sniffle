@@ -1,4 +1,5 @@
 #pragma once
+#include <span>
 #include <concepts>
 #include <boost/container/small_vector.hpp>
 #include "lib/common/stream/stream_reader.h"
@@ -14,7 +15,8 @@ namespace cebreiro::gamebase
 	class PacketReader
 	{
 	public:
-		PacketReader(const network::Buffer& buffer);
+		explicit PacketReader(const std::span<const char>& buffer, size_t offset = 0);
+		explicit PacketReader(const network::Buffer& buffer);
 
 		auto ReadInt8() -> int8_t;
 		auto ReadInt16() -> int16_t;
@@ -26,6 +28,8 @@ namespace cebreiro::gamebase
 
 		template <typename T> requires std::derived_from<T, IPacketDeserializable>
 		auto Read() -> T;
+
+		auto GetDebugString() const -> std::string;
 
 	private:
 		template <typename T>
@@ -44,8 +48,7 @@ namespace cebreiro::gamebase
 
 		using offset_container_type = boost::container::small_vector<size_t, 16>;
 		offset_container_type _offsets;
-		offset_container_type::reverse_iterator _iter;
-		offset_container_type::reverse_iterator _end;
+		size_t index = 0;
 	};
 
 	template <typename T> requires std::derived_from<T, IPacketDeserializable>
